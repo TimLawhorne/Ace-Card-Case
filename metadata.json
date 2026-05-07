@@ -1,0 +1,6 @@
+{
+  "name": "Ace Card Case",
+  "description": "Professional-grade AI appraisal for Trading Cards (Sports/TCG), Coins, Currency, Stamps, and Comic Books. Scan your assets, get technical grading insights, and track your inventory value with real-time analytics.",
+  "requestFramePermissions": ["camera"],
+  "majorCapabilities": ["AI Object Recognition", "Collectibles Appraisal", "Inventory Management"]
+}

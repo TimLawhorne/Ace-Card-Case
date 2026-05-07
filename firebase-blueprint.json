@@ -1,0 +1,45 @@
+{
+  "entities": {
+    "InventoryItem": {
+      "title": "Inventory Item",
+      "description": "A trading card, coin, or other collectable in the user's inventory",
+      "type": "object",
+      "properties": {
+        "player": { "type": "string" },
+        "year": { "type": "string" },
+        "brand": { "type": "string" },
+        "set": { "type": "string" },
+        "cardNumber": { "type": "string" },
+        "variant": { "type": "string" },
+        "itemType": { "type": "string" },
+        "isCurrency": { "type": "boolean" },
+        "isCoin": { "type": "boolean" },
+        "isStamp": { "type": "boolean" },
+        "isComic": { "type": "boolean" },
+        "estimatedGrade": { "type": "string" },
+        "gemMintProbability": { "type": "number" },
+        "probabilityExplanation": { "type": "string" },
+        "gradingRecommendation": { "type": "string" },
+        "isGraded": { "type": "boolean" },
+        "gradingCompany": { "type": "string" },
+        "officialGrade": { "type": "string" },
+        "marketValue": { "type": "number" },
+        "cost": { "type": "number" },
+        "quantity": { "type": "number" },
+        "frontImage": { "type": "string", "description": "Base64 encoded front image" },
+        "backImage": { "type": "string", "description": "Base64 encoded back image" },
+        "createdAt": { "type": "number" },
+        "ownerId": { "type": "string" },
+        "reasoning": { "type": "string" },
+        "subgrades": { "type": "object" }
+      },
+      "required": ["player", "itemType", "ownerId", "createdAt"]
+    }
+  },
+  "firestore": {
+    "inventory": {
+      "schema": "InventoryItem",
+      "description": "Collection of appraised items"
+    }
+  }
+}
