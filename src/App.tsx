@@ -441,6 +441,17 @@ const App = () => {
     }
   };
 
+  const formatDisplayValue = (val: number) => {
+    const num = Number(val) || 0;
+    if (num >= 10000) {
+      return '$' + (num / 1000).toLocaleString(undefined, { 
+        minimumFractionDigits: 0, 
+        maximumFractionDigits: 2 
+      }) + 'k';
+    }
+    return '$' + num.toLocaleString();
+  };
+
   const stats = useMemo(() => {
     const totalItems = cards.reduce((sum, c) => sum + (c.quantity || 1), 0);
     const totalMarket = cards.reduce((sum, c) => sum + ((c.marketValue || 0) * (c.quantity || 1)), 0);
@@ -513,57 +524,57 @@ const App = () => {
   }
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-200 font-sans overflow-hidden flex flex-col">
+    <div className="min-h-screen bg-slate-950 text-slate-200 font-sans overflow-hidden flex flex-col pt-8 md:pt-0">
       {/* Top Navigation Header */}
-      <header className="flex flex-col md:flex-row items-center px-6 md:px-10 py-4 md:py-8 bg-slate-950/50 backdrop-blur-xl sticky top-0 z-[100] animate-in slide-in-from-top duration-700 gap-4 md:gap-0">
-        <div className="w-full md:flex-1 flex items-center justify-between md:justify-start">
+      <header className="flex flex-col md:flex-row items-center px-4 md:px-10 py-3 md:py-6 bg-slate-950/50 backdrop-blur-xl sticky top-0 z-[100] animate-in slide-in-from-top duration-700 gap-4 md:gap-4 lg:gap-0">
+        <div className="w-full md:flex-none lg:flex-1 flex items-center justify-between">
           <div className="flex flex-col">
-            <h1 className="text-2xl md:text-3xl font-black italic tracking-tighter uppercase leading-none whitespace-nowrap">
+            <h1 className="text-xl md:text-2xl lg:text-3xl font-black italic tracking-tighter uppercase leading-none whitespace-nowrap">
               Ace Card <span className="text-indigo-500">Case</span>
             </h1>
-            <p className="text-[9px] uppercase tracking-[0.4em] text-slate-600 mt-1 font-bold">Appraisal System v3.2</p>
+            <p className="text-[8px] md:text-[9px] uppercase tracking-[0.4em] text-slate-600 mt-1 font-bold">Appraisal System v3.2</p>
           </div>
           
-          {/* User Info (Mobile Only) */}
-          <div className="flex md:hidden items-center gap-2 bg-slate-900/80 border border-slate-800 rounded-xl p-1.5 px-3">
-             <div className="flex flex-col">
-               <p className="text-[9px] font-black italic uppercase leading-none">{user?.email?.split('@')[0] || 'Collector'}</p>
+          {/* User Info (Mobile Only - below md) */}
+          <div className="flex md:hidden items-center gap-2 bg-slate-900/80 border border-slate-800 rounded-xl p-1.5 px-3 max-w-[140px]">
+             <div className="flex flex-col min-w-0">
+               <p className="text-[9px] font-black italic uppercase leading-none truncate">{user?.email?.split('@')[0] || 'Collector'}</p>
              </div>
              <button 
                onClick={() => auth.signOut()}
-               className="p-1 hover:bg-white/5 rounded-lg text-slate-500 hover:text-red-400 transition-colors ml-1"
+               className="p-1 hover:bg-white/5 rounded-lg text-slate-500 hover:text-red-400 transition-colors ml-1 flex-shrink-0"
              >
                <LogOut className="w-3 h-3" />
              </button>
           </div>
         </div>
 
-        <nav className="w-full md:w-auto flex items-center gap-2 bg-slate-900/50 p-1.5 rounded-2xl border border-slate-800 flex-none md:mx-4">
+        <nav className="w-full md:w-auto flex items-center gap-2 bg-slate-900/50 p-1.5 rounded-2xl border border-slate-800 flex-none md:mx-0 lg:mx-4">
           <button 
             onClick={() => setActiveTab('scanner')}
-            className={`flex-1 md:flex-none flex items-center justify-center gap-3 px-6 py-3 rounded-xl transition-all duration-300 ${activeTab === 'scanner' ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/20' : 'text-slate-500 hover:text-slate-300 hover:bg-white/5'}`}
+            className={`flex-1 md:flex-none flex items-center justify-center gap-2 md:gap-3 px-4 md:px-6 py-2.5 md:py-3 rounded-xl transition-all duration-300 ${activeTab === 'scanner' ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/20' : 'text-slate-500 hover:text-slate-300 hover:bg-white/5'}`}
           >
-            <Scan className="w-4 h-4" />
-            <span className="text-[10px] font-black uppercase tracking-widest whitespace-nowrap">Scanner HUD</span>
+            <Scan className="w-3.5 h-3.5 md:w-4 md:h-4" />
+            <span className="text-[9px] md:text-[10px] font-black uppercase tracking-widest whitespace-nowrap">Scanner HUD</span>
           </button>
           <button 
             onClick={() => setActiveTab('case')}
-            className={`flex-1 md:flex-none flex items-center justify-center gap-3 px-6 py-3 rounded-xl transition-all duration-300 ${activeTab === 'case' ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/20' : 'text-slate-500 hover:text-slate-300 hover:bg-white/5'}`}
+            className={`flex-1 md:flex-none flex items-center justify-center gap-2 md:gap-3 px-4 md:px-6 py-2.5 md:py-3 rounded-xl transition-all duration-300 ${activeTab === 'case' ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/20' : 'text-slate-500 hover:text-slate-300 hover:bg-white/5'}`}
           >
-            <Trophy className="w-4 h-4" />
-            <span className="text-[10px] font-black uppercase tracking-widest whitespace-nowrap">My Case</span>
+            <Trophy className="w-3.5 h-3.5 md:w-4 md:h-4" />
+            <span className="text-[9px] md:text-[10px] font-black uppercase tracking-widest whitespace-nowrap">My Case</span>
           </button>
         </nav>
 
-        <div className="hidden md:flex flex-1 items-center justify-center">
+        <div className="hidden lg:flex lg:flex-1 items-center justify-center">
           <span className="text-[9px] font-black uppercase tracking-[0.4em] text-indigo-400/60 transition-opacity">Asset Appraisal</span>
         </div>
 
-        <div className="hidden md:flex flex-1 justify-end">
-          <div className="flex items-center gap-3 bg-slate-900/80 border border-slate-800 rounded-2xl p-2 px-4">
-            <div>
-              <p className="text-[10px] font-black italic uppercase leading-none">{user?.email?.split('@')[0] || 'Collector'}</p>
-              <p className="text-[7px] text-indigo-400 font-black uppercase mt-1 tracking-widest">Collector Pro</p>
+        <div className="hidden md:flex md:flex-none lg:flex-1 justify-end">
+          <div className="flex items-center gap-3 bg-slate-900/80 border border-slate-800 rounded-2xl p-2 px-4 shadow-xl">
+            <div className="min-w-0">
+              <p className="text-[10px] font-black italic uppercase leading-none truncate max-w-[100px] lg:max-w-none">{user?.email?.split('@')[0] || 'Collector'}</p>
+              <p className="hidden md:block text-[7px] text-indigo-400 font-black uppercase mt-1 tracking-widest whitespace-nowrap">Collector Pro</p>
             </div>
             <button 
               onClick={() => auth.signOut()}
@@ -583,12 +594,12 @@ const App = () => {
           <div className="flex gap-12 md:gap-32 justify-center items-center animate-in fade-in zoom-in duration-300">
             <div className="flex flex-col items-center">
               <span className="text-[8px] font-black uppercase tracking-[0.3em] text-slate-600 mb-1">Total Cost</span>
-              <span className="text-xl md:text-2xl font-black italic tracking-tighter text-slate-400 font-mono">${stats.totalCost.toLocaleString()}</span>
+              <span className="text-xl md:text-2xl font-black italic tracking-tighter text-slate-400 font-mono">{formatDisplayValue(stats.totalCost)}</span>
             </div>
             <div className="flex flex-col items-center">
               <span className="text-[8px] font-black uppercase tracking-[0.3em] text-emerald-500/60 mb-1">Total Gain</span>
               <span className={`text-xl md:text-2xl font-black italic tracking-tighter font-mono ${stats.profitLoss >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
-                {stats.profitLoss >= 0 ? '+$' : '-$'}{Math.abs(stats.profitLoss).toLocaleString()}
+                {stats.profitLoss >= 0 ? '+' : '-'}{formatDisplayValue(Math.abs(stats.profitLoss))}
               </span>
             </div>
           </div>
@@ -596,7 +607,7 @@ const App = () => {
           {/* Row 2: Portfolio Value (Centered) */}
           <div className="flex flex-col items-center bg-white/5 px-10 py-4 rounded-3xl border border-white/5 animate-in fade-in zoom-in duration-300 delay-75 shadow-xl">
             <span className="text-[9px] font-black uppercase tracking-[0.4em] text-indigo-400 mb-1">Portfolio Value</span>
-            <span className="text-4xl md:text-5xl font-black italic tracking-tighter text-white font-mono">${stats.totalMarket.toLocaleString()}</span>
+            <span className="text-4xl md:text-5xl font-black italic tracking-tighter text-white font-mono">{formatDisplayValue(stats.totalMarket)}</span>
           </div>
 
           {/* Row 3: Search Bar */}
@@ -787,7 +798,7 @@ const App = () => {
                             <div className="flex flex-col">
                               <span className="text-[8px] font-black uppercase text-slate-600 mb-1">Mkt Value</span>
                               <div className="flex items-center gap-2">
-                                <span className="text-lg font-black italic tracking-tighter">${(card.marketValue || 0).toLocaleString()}</span>
+                                <span className="text-lg font-black italic tracking-tighter">{formatDisplayValue(card.marketValue || 0)}</span>
                               </div>
                             </div>
                             <div className="flex flex-col text-right">
@@ -890,6 +901,17 @@ const App = () => {
 };
 
 const AppraisalDetailView = ({ data, setData, front, back, onRotate, mode = 'scanner', onCancel, onFullReset, onSave, onDelete, onRescan, onReevaluate, isSaving, isAnalyzing, isReevaluating, scanProgress, darkMode, user }: any) => {
+  const formatDisplayValue = (val: number) => {
+    const num = Number(val) || 0;
+    if (num >= 10000) {
+      return '$' + (num / 1000).toLocaleString(undefined, { 
+        minimumFractionDigits: 0, 
+        maximumFractionDigits: 2 
+      }) + 'k';
+    }
+    return '$' + num.toLocaleString();
+  };
+
   const [showParallelPicker, setShowParallelPicker] = useState(false);
   const [isManualParallel, setIsManualParallel] = useState(false);
   const [manualParallelValue, setManualParallelValue] = useState("");
@@ -1035,14 +1057,14 @@ const AppraisalDetailView = ({ data, setData, front, back, onRotate, mode = 'sca
               <span className="text-indigo-400 text-xl font-black italic mt-4">{Math.round(scanProgress)}%</span>
            </div>
         )}
-        <div className="p-10 md:p-16 bg-gradient-to-br from-indigo-600 via-indigo-700 to-indigo-900 text-white relative overflow-hidden">
+        <div className="p-8 md:p-12 lg:p-16 bg-gradient-to-br from-indigo-600 via-indigo-700 to-indigo-900 text-white relative overflow-hidden">
           <div className="absolute top-0 right-0 w-[40rem] h-[40rem] bg-white/5 rounded-full -mr-60 -mt-60 animate-pulse transition-transform group-hover:scale-105 duration-[5s]" />
           <div className="relative z-10 flex flex-col md:flex-row justify-between items-center gap-8">
             <div className="space-y-4 text-center md:text-left flex-1 w-full">
-              <h2 className={`${data.player?.length > 25 ? 'text-2xl md:text-4xl' : 'text-3xl md:text-6xl'} font-black italic uppercase tracking-tighter leading-tight break-words md:whitespace-nowrap flex flex-col`}>
+              <h2 className={`${data.player?.length > 25 ? 'text-xl md:text-2xl lg:text-4xl' : 'text-2xl md:text-4xl lg:text-6xl'} font-black italic uppercase tracking-tighter leading-tight break-words md:whitespace-nowrap flex flex-col`}>
                 <span className={data.player?.length > 25 ? 'whitespace-nowrap' : ''}>{data.isStamp ? (data.player || '').replace(/United States/gi, 'US').replace(/3\s*Cents?/gi, '3 Cent Stamp') : data.player}</span>
                 {data.cardNumber && data.player?.length > 25 && (
-                  <span className="text-indigo-400 text-lg md:text-2xl mt-1 font-black opacity-90">#{data.cardNumber}</span>
+                  <span className="text-indigo-400 text-base md:text-xl lg:text-2xl mt-1 font-black opacity-90">#{data.cardNumber}</span>
                 )}
               </h2>
               <div className="flex items-center justify-center md:justify-start">
@@ -1494,8 +1516,8 @@ const AppraisalDetailView = ({ data, setData, front, back, onRotate, mode = 'sca
                       <div className="flex flex-col leading-tight min-h-[24px] justify-center">
                         <span className="text-[8px] font-black text-white uppercase tracking-widest">Raw</span>
                       </div>
-                      <div className="bg-slate-900 py-4 rounded-2xl border border-slate-800 group-hover:border-slate-700 transition-all">
-                        <span className="text-xl md:text-2xl font-black italic text-slate-200">${data.marketValueRaw || 0}</span>
+                      <div className="bg-slate-900 py-3 md:py-4 rounded-2xl border border-slate-800 group-hover:border-slate-700 transition-all">
+                        <span className="text-lg md:text-xl lg:text-2xl font-black italic text-slate-200">{formatDisplayValue(data.marketValueRaw || 0)}</span>
                       </div>
                     </div>
                     
@@ -1506,8 +1528,8 @@ const AppraisalDetailView = ({ data, setData, front, back, onRotate, mode = 'sca
                             <span className="text-[8px] font-black text-yellow-500 uppercase tracking-widest">PSA 9</span>
                             <span className="text-[8px] font-black text-yellow-500 uppercase tracking-widest">NM-MT</span>
                           </div>
-                          <div className="bg-slate-900 py-4 rounded-2xl border border-yellow-500/20 group-hover:border-yellow-500/40 transition-all shadow-lg shadow-yellow-500/5">
-                            <span className="text-xl md:text-2xl font-black italic text-yellow-400">${data.marketValuePSA9 || 0}</span>
+                          <div className="bg-slate-900 py-3 md:py-4 rounded-2xl border border-yellow-500/20 group-hover:border-yellow-500/40 transition-all shadow-lg shadow-yellow-500/5">
+                            <span className="text-lg md:text-xl lg:text-2xl font-black italic text-yellow-400">{formatDisplayValue(data.marketValuePSA9 || 0)}</span>
                           </div>
                         </div>
                         <div className="flex flex-col gap-2 text-center group">
@@ -1515,8 +1537,8 @@ const AppraisalDetailView = ({ data, setData, front, back, onRotate, mode = 'sca
                             <span className="text-[8px] font-black text-emerald-500 uppercase tracking-widest">PSA 10</span>
                             <span className="text-[8px] font-black text-emerald-500 uppercase tracking-widest">GEM MT</span>
                           </div>
-                          <div className="bg-slate-900 py-4 rounded-2xl border border-emerald-500/10 group-hover:border-emerald-500/30 transition-all shadow-lg shadow-emerald-500/5">
-                            <span className="text-xl md:text-2xl font-black italic text-emerald-400">${data.marketValuePSA10 || 0}</span>
+                          <div className="bg-slate-900 py-3 md:py-4 rounded-2xl border border-emerald-500/10 group-hover:border-emerald-500/30 transition-all shadow-lg shadow-emerald-500/5">
+                            <span className="text-lg md:text-xl lg:text-2xl font-black italic text-emerald-400">{formatDisplayValue(data.marketValuePSA10 || 0)}</span>
                           </div>
                         </div>
                       </>
@@ -1526,9 +1548,9 @@ const AppraisalDetailView = ({ data, setData, front, back, onRotate, mode = 'sca
                           <span className="text-[8px] font-black text-emerald-500 uppercase tracking-widest">Predicted</span>
                           <span className="text-[8px] font-black text-emerald-500 uppercase tracking-widest">{data.estimatedGrade || 'Grade'}</span>
                         </div>
-                        <div className="bg-slate-900 py-4 rounded-2xl border border-emerald-500/10 group-hover:border-emerald-500/30 transition-all shadow-lg shadow-emerald-500/5">
-                          <span className="text-xl md:text-2xl font-black italic text-emerald-400">
-                            ${Number(data.gemMintProbability) > 0.6 ? (data.marketValuePSA10 || 0) : (data.marketValuePSA9 || 0)}
+                        <div className="bg-slate-900 py-3 md:py-4 rounded-2xl border border-emerald-500/10 group-hover:border-emerald-500/30 transition-all shadow-lg shadow-emerald-500/5">
+                          <span className="text-lg md:text-xl lg:text-2xl font-black italic text-emerald-400">
+                            {formatDisplayValue(Number(data.gemMintProbability) > 0.6 ? (data.marketValuePSA10 || 0) : (data.marketValuePSA9 || 0))}
                           </span>
                         </div>
                       </div>
