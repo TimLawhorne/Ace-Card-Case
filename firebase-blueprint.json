@@ -34,12 +34,31 @@
         "subgrades": { "type": "object" }
       },
       "required": ["player", "itemType", "ownerId", "createdAt"]
+    },
+    "User": {
+      "title": "User",
+      "description": "User profile with subscription data",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string" },
+        "email": { "type": "string" },
+        "trialStartedAt": { "type": "number" },
+        "trialExpiresAt": { "type": "number" },
+        "isSubscribed": { "type": "boolean" },
+        "isDevUnlocked": { "type": "boolean" },
+        "createdAt": { "type": "number" }
+      },
+      "required": ["uid", "trialExpiresAt"]
     }
   },
   "firestore": {
     "inventory": {
       "schema": "InventoryItem",
       "description": "Collection of appraised items"
+    },
+    "users": {
+      "schema": "User",
+      "description": "Collection of user profiles"
     }
   }
 }

@@ -30,6 +30,13 @@ service cloud.firestore {
              (data.get('createdAt', 0) is number || data.get('createdAt', 0) is int);
     }
 
+    // Helper: Validate User Profile Schema
+    function isValidUser(data) {
+      return data.uid == request.auth.uid &&
+             data.email is string &&
+             (data.trialExpiresAt is number || data.trialExpiresAt is int);
+    }
+
     match /inventory/{itemId} {
       allow get: if isSignedIn() && existing().ownerId == request.auth.uid;
       allow list: if isSignedIn() && resource.data.ownerId == request.auth.uid;
@@ -44,6 +51,12 @@ service cloud.firestore {
                     isValidInventoryItem(incoming());
                     
       allow delete: if isSignedIn() && existing().ownerId == request.auth.uid;
+    }
+
+    match /users/{userId} {
+      allow get: if isSignedIn() && userId == request.auth.uid;
+      allow create: if isSignedIn() && userId == request.auth.uid && isValidUser(incoming());
+      allow update: if isSignedIn() && userId == request.auth.uid && isValidUser(incoming());
     }
   }
 }

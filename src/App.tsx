@@ -105,47 +105,174 @@ const rotateImage = (base64Str: string): Promise<string> => {
 
 // --- Components ---
 
-const ImageZone = ({ label, img, setImg, onRotate }: any) => (
-  <div className={`aspect-[3/4] rounded-[2.5rem] border-4 border-dashed flex flex-col items-center justify-center overflow-hidden transition-all duration-300 relative ${img ? 'border-indigo-500 bg-slate-900 shadow-2xl' : 'bg-slate-900 border-slate-800 hover:border-slate-700'}`}>
-    {img ? (
-      <>
-        <img src={img} className="w-full h-full object-contain p-4" alt={label} />
-        {/* Mobile controls (always visible) */}
-        <div className="absolute top-4 right-4 flex flex-col gap-2 md:hidden">
-          <button onClick={onRotate} className="p-3 bg-indigo-600 text-white rounded-xl shadow-xl active:scale-95"><RotateCw className="w-4 h-4" /></button>
-          <button onClick={() => setImg(null)} className="p-3 bg-red-500 text-white rounded-xl shadow-xl active:scale-95"><Trash2 className="w-4 h-4" /></button>
+const ImageZone = ({ label, img, setImg, onRotate }: any) => {
+  const zoneId = label.toLowerCase().replace(/\s+/g, '-');
+  return (
+    <div className={`aspect-[3/4] rounded-[2.5rem] border-4 border-dashed flex flex-col items-center justify-center overflow-hidden transition-all duration-300 relative ${img ? 'border-indigo-500 bg-slate-900 shadow-2xl' : 'bg-slate-900 border-slate-800 hover:border-slate-700'}`}>
+      {img ? (
+        <>
+          <img src={img} className="w-full h-full object-contain p-4" alt={label} />
+          {/* Mobile controls (always visible) */}
+          <div className="absolute top-4 right-4 flex flex-col gap-2 md:hidden">
+            <button onClick={onRotate} className="p-3 bg-indigo-600 text-white rounded-xl shadow-xl active:scale-95"><RotateCw className="w-4 h-4" /></button>
+            <button onClick={() => setImg(null)} className="p-3 bg-red-500 text-white rounded-xl shadow-xl active:scale-95"><Trash2 className="w-4 h-4" /></button>
+          </div>
+          {/* Desktop controls (hover) */}
+          <div className="absolute inset-0 bg-slate-950/40 opacity-0 md:hover:opacity-100 transition-opacity hidden md:flex items-center justify-center gap-4">
+            <button onClick={onRotate} className="p-4 bg-indigo-600 text-white rounded-full shadow-2xl transition-transform hover:scale-110 active:scale-95"><RotateCw className="w-6 h-6" /></button>
+            <button onClick={() => setImg(null)} className="p-4 bg-red-500 text-white rounded-full shadow-2xl transition-transform hover:scale-110 active:scale-95"><Trash2 className="w-6 h-6" /></button>
+          </div>
+        </>
+      ) : (
+        <div className="text-center p-8 space-y-6">
+          <div className="w-16 h-16 bg-slate-800 rounded-3xl flex items-center justify-center mx-auto border border-slate-700 shadow-xl"><Scan className="w-8 h-8 text-slate-500" /></div>
+          <p className="text-[12px] font-black uppercase text-indigo-500 tracking-[0.2em]">{label}</p>
+          <div className="flex gap-4">
+            <label htmlFor={`camera-${zoneId}`} className="p-5 rounded-3xl bg-indigo-600 hover:bg-indigo-700 text-white cursor-pointer shadow-xl transition-all hover:scale-105 active:scale-95" title="Take Photo">
+              <CameraIcon className="w-6 h-6" />
+              <input 
+                id={`camera-${zoneId}`}
+                type="file" 
+                accept="image/*" 
+                capture="environment" 
+                onChange={e => { const f = e.target.files?.[0]; if (f) { const r = new FileReader(); r.onload = () => setImg(r.result as string); r.readAsDataURL(f); } e.target.value = ''; }} 
+                className="hidden" 
+              />
+            </label>
+            <label htmlFor={`gallery-${zoneId}`} className="p-5 rounded-3xl bg-slate-800 hover:bg-slate-700 text-white cursor-pointer border border-slate-700 shadow-xl transition-all hover:scale-105 active:scale-95" title="Upload from Gallery">
+              <ImageIcon className="w-6 h-6" />
+              <input 
+                id={`gallery-${zoneId}`}
+                type="file" 
+                accept="image/*" 
+                onChange={e => { const f = e.target.files?.[0]; if (f) { const r = new FileReader(); r.onload = () => setImg(r.result as string); r.readAsDataURL(f); } e.target.value = ''; }} 
+                className="hidden" 
+              />
+            </label>
+          </div>
         </div>
-        {/* Desktop controls (hover) */}
-        <div className="absolute inset-0 bg-slate-950/40 opacity-0 md:hover:opacity-100 transition-opacity hidden md:flex items-center justify-center gap-4">
-          <button onClick={onRotate} className="p-4 bg-indigo-600 text-white rounded-full shadow-2xl transition-transform hover:scale-110 active:scale-95"><RotateCw className="w-6 h-6" /></button>
-          <button onClick={() => setImg(null)} className="p-4 bg-red-500 text-white rounded-full shadow-2xl transition-transform hover:scale-110 active:scale-95"><Trash2 className="w-6 h-6" /></button>
+      )}
+    </div>
+  );
+};
+
+const Paywall = ({ userProfile }: { userProfile: any }) => {
+  const [code, setCode] = useState('');
+  const [error, setError] = useState('');
+  const [isUnlocking, setIsUnlocking] = useState(false);
+
+  const handleDevUnlock = async () => {
+    if (code === 'DEV4420') {
+      setIsUnlocking(true);
+      try {
+        await updateDoc(doc(db, 'users', userProfile.uid), {
+          isDevUnlocked: true
+        });
+      } catch (err) {
+        setError('Failed to unlock. Please try again.');
+      } finally {
+        setIsUnlocking(false);
+      }
+    } else {
+      setError('Invalid developer code.');
+      setTimeout(() => setError(''), 3000);
+    }
+  };
+
+  const daysLeft = Math.ceil((userProfile.trialExpiresAt - Date.now()) / (1000 * 60 * 60 * 24));
+
+  return (
+    <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center p-6 bg-[radial-gradient(circle_at_top_right,rgba(99,102,241,0.1),transparent)]">
+      <div className="max-w-2xl w-full text-center space-y-12 animate-in fade-in zoom-in duration-700">
+        <div className="space-y-4">
+          <div className="w-24 h-24 bg-indigo-600 rounded-[2.5rem] flex items-center justify-center mx-auto shadow-2xl shadow-indigo-600/30 mb-8">
+            <ShieldCheck className="w-12 h-12 text-white" />
+          </div>
+          <h1 className="text-4xl md:text-6xl font-black italic tracking-tighter uppercase leading-none">
+            Trial <span className="text-red-500">Expired</span>
+          </h1>
+          <p className="text-[12px] uppercase tracking-[0.6em] text-slate-500 font-bold opacity-80">Unlimited Access Required</p>
         </div>
-      </>
-    ) : (
-      <div className="text-center p-8 space-y-6">
-        <div className="w-16 h-16 bg-slate-800 rounded-3xl flex items-center justify-center mx-auto border border-slate-700 shadow-xl"><Scan className="w-8 h-8 text-slate-500" /></div>
-        <p className="text-[12px] font-black uppercase text-indigo-500 tracking-[0.2em]">{label}</p>
-        <div className="flex gap-4">
-          <label className="p-5 rounded-3xl bg-indigo-600 hover:bg-indigo-700 text-white cursor-pointer shadow-xl transition-all hover:scale-105 active:scale-95">
-            <CameraIcon className="w-6 h-6" />
-            <input type="file" capture="environment" accept="image/*" onChange={e => { const f = e.target.files?.[0]; if (f) { const r = new FileReader(); r.onload = () => setImg(r.result as string); r.readAsDataURL(f); } }} className="hidden" />
-          </label>
-          <label className="p-5 rounded-3xl bg-slate-800 hover:bg-slate-700 text-white cursor-pointer border border-slate-700 shadow-xl transition-all hover:scale-105 active:scale-95">
-            <ImageIcon className="w-6 h-6" />
-            <input type="file" accept="image/*" onChange={e => { const f = e.target.files?.[0]; if (f) { const r = new FileReader(); r.onload = () => setImg(r.result as string); r.readAsDataURL(f); } }} className="hidden" />
-          </label>
+
+        <div className="bg-slate-900/50 p-8 md:p-12 rounded-[4rem] border border-slate-800 shadow-2xl backdrop-blur-xl relative overflow-hidden">
+          <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-500/5 blur-3xl rounded-full -mr-32 -mt-32" />
+          
+          <div className="space-y-8 relative z-10">
+            <div className="space-y-4">
+              <h2 className="text-2xl md:text-3xl font-black italic uppercase tracking-tight text-white leading-none">Choose Your Plan</h2>
+              <p className="text-slate-400 text-sm font-medium">Your 3-day trial has concluded. Subscribe to continue using Ace Card Case Pro features.</p>
+            </div>
+
+            <div className="grid grid-cols-1 gap-6">
+              <div className="p-8 bg-indigo-600 rounded-[2.5rem] text-white text-left relative overflow-hidden group">
+                <div className="flex justify-between items-start relative z-10">
+                  <div>
+                    <h3 className="text-xl font-black italic uppercase tracking-tight mb-2">Monthly Access Pro</h3>
+                    <p className="text-indigo-100 text-xs font-bold uppercase tracking-widest opacity-80">Full Appraisal Engine v3.2</p>
+                  </div>
+                  <div className="text-right">
+                    <span className="text-3xl font-black italic leading-none">$9.99</span>
+                    <p className="text-[10px] font-bold uppercase tracking-widest opacity-60">/month</p>
+                  </div>
+                </div>
+                <ul className="mt-8 space-y-3 relative z-10">
+                  <li className="flex items-center gap-3 text-sm font-bold"><CheckCircle2 className="w-5 h-5 text-indigo-300" /> Unlimited AI Appraisals</li>
+                  <li className="flex items-center gap-3 text-sm font-bold"><CheckCircle2 className="w-5 h-5 text-indigo-300" /> Cloud Portfolio Sync</li>
+                  <li className="flex items-center gap-3 text-sm font-bold"><CheckCircle2 className="w-5 h-5 text-indigo-300" /> Real-time Market Comps</li>
+                </ul>
+                <button 
+                  onClick={() => alert("Subscription logic would go here. No IAP requested, so this is just UI for now.")}
+                  className="w-full mt-8 py-4 bg-white text-indigo-600 rounded-2xl font-black uppercase tracking-widest text-xs hover:bg-slate-100 transition-all shadow-xl"
+                >
+                  Subscribe Now
+                </button>
+              </div>
+            </div>
+
+            <div className="pt-8 border-t border-slate-800 space-y-6">
+              <p className="text-[10px] font-black text-slate-600 uppercase tracking-[0.4em]">Developer Bypass</p>
+              <div className="flex gap-4">
+                <div className="flex-1 bg-slate-950 border border-slate-800 rounded-2xl px-6 py-4 transition-all focus-within:border-indigo-500/50">
+                  <input 
+                    type="text" 
+                    placeholder="ENTER DEV CODE..." 
+                    value={code}
+                    onChange={(e) => setCode(e.target.value.toUpperCase())}
+                    className="w-full bg-transparent border-none outline-none text-xs font-black uppercase tracking-widest text-white placeholder:text-slate-800"
+                  />
+                </div>
+                <button 
+                  onClick={handleDevUnlock}
+                  disabled={isUnlocking}
+                  className="px-8 bg-slate-800 hover:bg-slate-700 text-white rounded-2xl font-black uppercase tracking-widest text-[10px] transition-all disabled:opacity-50"
+                >
+                  {isUnlocking ? 'Unlocking...' : 'Apply'}
+                </button>
+              </div>
+              {error && <p className="text-red-500 text-[10px] font-black uppercase tracking-widest animate-pulse">{error}</p>}
+            </div>
+
+            <button 
+              onClick={() => auth.signOut()}
+              className="text-slate-600 hover:text-slate-400 text-[10px] font-black uppercase tracking-widest transition-colors"
+            >
+              Sign out and try another account
+            </button>
+          </div>
         </div>
       </div>
-    )}
-  </div>
-);
+    </div>
+  );
+};
 
 const App = () => {
   const [activeTab, setActiveTab] = useState('scanner');
   const [user, setUser] = useState<any>(null);
+  const [userProfile, setUserProfile] = useState<any>(null);
   const [cards, setCards] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [authLoading, setAuthLoading] = useState(true);
+  const [profileLoading, setProfileLoading] = useState(true);
   
   const [selectedCaseCard, setSelectedCaseCard] = useState<any>(null);
   const [frontImage, setFrontImage] = useState<string | null>(null);
@@ -208,9 +335,46 @@ const App = () => {
     const unsubscribe = onAuthStateChanged(auth, (u) => {
       setUser(u);
       setAuthLoading(false);
+      if (!u) {
+        setUserProfile(null);
+        setProfileLoading(false);
+      }
     });
     return () => unsubscribe();
   }, []);
+
+  useEffect(() => {
+    if (!user) return;
+    setProfileLoading(true);
+    const userDocRef = doc(db, 'users', user.uid);
+    const unsubscribe = onSnapshot(userDocRef, async (snap) => {
+      if (snap.exists()) {
+        setUserProfile(snap.data());
+        setProfileLoading(false);
+      } else {
+        // Initialize user profile
+        const now = Date.now();
+        const trialExpiresAt = now + (3 * 24 * 60 * 60 * 1000); // 3 days
+        const newProfile = {
+          uid: user.uid,
+          email: user.email,
+          createdAt: now,
+          trialStartedAt: now,
+          trialExpiresAt: trialExpiresAt,
+          isSubscribed: false,
+          isDevUnlocked: false
+        };
+        try {
+          await setDoc(userDocRef, newProfile);
+          setUserProfile(newProfile);
+        } catch (err) {
+          console.error("Error initializing profile:", err);
+        }
+        setProfileLoading(false);
+      }
+    });
+    return () => unsubscribe();
+  }, [user]);
 
   const handleLogin = async () => {
     const provider = new GoogleAuthProvider();
@@ -482,7 +646,17 @@ const App = () => {
     String(c.brand || '').toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  if (authLoading) {
+  const isTrialActive = useMemo(() => {
+    if (!userProfile) return true;
+    return userProfile.trialExpiresAt > Date.now();
+  }, [userProfile]);
+
+  const isAccessEnabled = useMemo(() => {
+    if (!userProfile) return true; // Show loading or wait
+    return isTrialActive || userProfile.isSubscribed || userProfile.isDevUnlocked;
+  }, [userProfile, isTrialActive]);
+
+  if (authLoading || (user && profileLoading)) {
     return (
       <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center">
         <Loader2 className="w-12 h-12 text-indigo-500 animate-spin" />
@@ -523,11 +697,15 @@ const App = () => {
     );
   }
 
+  if (!isAccessEnabled) {
+    return <Paywall userProfile={userProfile} />;
+  }
+
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-200 font-sans overflow-hidden flex flex-col pt-8 md:pt-0">
+    <div className="min-h-screen bg-slate-950 text-slate-200 font-sans overflow-hidden flex flex-col pt-16 lg:pt-0">
       {/* Top Navigation Header */}
-      <header className="flex flex-col md:flex-row items-center px-4 md:px-10 py-3 md:py-6 bg-slate-950/50 backdrop-blur-xl sticky top-0 z-[100] animate-in slide-in-from-top duration-700 gap-4 md:gap-4 lg:gap-0">
-        <div className="w-full md:flex-none lg:flex-1 flex items-center justify-between">
+      <header className="flex flex-col md:flex-row items-center px-4 md:px-10 py-3 md:py-6 bg-slate-950/50 backdrop-blur-xl sticky top-0 z-[100] animate-in slide-in-from-top duration-700 gap-4 md:gap-0">
+        <div className="w-full md:flex-1 flex items-center justify-between md:justify-start">
           <div className="flex flex-col">
             <h1 className="text-xl md:text-2xl lg:text-3xl font-black italic tracking-tighter uppercase leading-none whitespace-nowrap">
               Ace Card <span className="text-indigo-500">Case</span>
@@ -549,7 +727,7 @@ const App = () => {
           </div>
         </div>
 
-        <nav className="w-full md:w-auto flex items-center gap-2 bg-slate-900/50 p-1.5 rounded-2xl border border-slate-800 flex-none md:mx-0 lg:mx-4">
+        <nav className="w-full md:w-auto flex items-center gap-2 bg-slate-900/50 p-1.5 rounded-2xl border border-slate-800 flex-none md:mx-4">
           <button 
             onClick={() => setActiveTab('scanner')}
             className={`flex-1 md:flex-none flex items-center justify-center gap-2 md:gap-3 px-4 md:px-6 py-2.5 md:py-3 rounded-xl transition-all duration-300 ${activeTab === 'scanner' ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/20' : 'text-slate-500 hover:text-slate-300 hover:bg-white/5'}`}
@@ -570,9 +748,9 @@ const App = () => {
           <span className="text-[9px] font-black uppercase tracking-[0.4em] text-indigo-400/60 transition-opacity">Asset Appraisal</span>
         </div>
 
-        <div className="hidden md:flex md:flex-none lg:flex-1 justify-end">
+        <div className="hidden md:flex md:flex-1 justify-end">
           <div className="flex items-center gap-3 bg-slate-900/80 border border-slate-800 rounded-2xl p-2 px-4 shadow-xl">
-            <div className="min-w-0">
+            <div className="min-w-0 text-right">
               <p className="text-[10px] font-black italic uppercase leading-none truncate max-w-[100px] lg:max-w-none">{user?.email?.split('@')[0] || 'Collector'}</p>
               <p className="hidden md:block text-[7px] text-indigo-400 font-black uppercase mt-1 tracking-widest whitespace-nowrap">Collector Pro</p>
             </div>
@@ -1517,7 +1695,7 @@ const AppraisalDetailView = ({ data, setData, front, back, onRotate, mode = 'sca
                         <span className="text-[8px] font-black text-white uppercase tracking-widest">Raw</span>
                       </div>
                       <div className="bg-slate-900 py-3 md:py-4 rounded-2xl border border-slate-800 group-hover:border-slate-700 transition-all">
-                        <span className="text-lg md:text-xl lg:text-2xl font-black italic text-slate-200">{formatDisplayValue(data.marketValueRaw || 0)}</span>
+                        <span className="text-base md:text-xl lg:text-2xl font-black italic text-slate-200">{formatDisplayValue(data.marketValueRaw || 0)}</span>
                       </div>
                     </div>
                     
@@ -1529,7 +1707,7 @@ const AppraisalDetailView = ({ data, setData, front, back, onRotate, mode = 'sca
                             <span className="text-[8px] font-black text-yellow-500 uppercase tracking-widest">NM-MT</span>
                           </div>
                           <div className="bg-slate-900 py-3 md:py-4 rounded-2xl border border-yellow-500/20 group-hover:border-yellow-500/40 transition-all shadow-lg shadow-yellow-500/5">
-                            <span className="text-lg md:text-xl lg:text-2xl font-black italic text-yellow-400">{formatDisplayValue(data.marketValuePSA9 || 0)}</span>
+                            <span className="text-base md:text-xl lg:text-2xl font-black italic text-yellow-400">{formatDisplayValue(data.marketValuePSA9 || 0)}</span>
                           </div>
                         </div>
                         <div className="flex flex-col gap-2 text-center group">
@@ -1538,7 +1716,7 @@ const AppraisalDetailView = ({ data, setData, front, back, onRotate, mode = 'sca
                             <span className="text-[8px] font-black text-emerald-500 uppercase tracking-widest">GEM MT</span>
                           </div>
                           <div className="bg-slate-900 py-3 md:py-4 rounded-2xl border border-emerald-500/10 group-hover:border-emerald-500/30 transition-all shadow-lg shadow-emerald-500/5">
-                            <span className="text-lg md:text-xl lg:text-2xl font-black italic text-emerald-400">{formatDisplayValue(data.marketValuePSA10 || 0)}</span>
+                            <span className="text-base md:text-xl lg:text-2xl font-black italic text-emerald-400">{formatDisplayValue(data.marketValuePSA10 || 0)}</span>
                           </div>
                         </div>
                       </>
@@ -1549,7 +1727,7 @@ const AppraisalDetailView = ({ data, setData, front, back, onRotate, mode = 'sca
                           <span className="text-[8px] font-black text-emerald-500 uppercase tracking-widest">{data.estimatedGrade || 'Grade'}</span>
                         </div>
                         <div className="bg-slate-900 py-3 md:py-4 rounded-2xl border border-emerald-500/10 group-hover:border-emerald-500/30 transition-all shadow-lg shadow-emerald-500/5">
-                          <span className="text-lg md:text-xl lg:text-2xl font-black italic text-emerald-400">
+                          <span className="text-base md:text-xl lg:text-2xl font-black italic text-emerald-400">
                             {formatDisplayValue(Number(data.gemMintProbability) > 0.6 ? (data.marketValuePSA10 || 0) : (data.marketValuePSA9 || 0))}
                           </span>
                         </div>

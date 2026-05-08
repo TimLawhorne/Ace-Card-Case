@@ -109,6 +109,7 @@ export async function analyzeAsset(frontImageBase64: string, backImageBase64: st
   - If eBay sales data is not available for a specific item (e.g. some stamps or coins), use the most reliable market data available and note it in reasoning.
   
   FOR SPORTS AND TCG CARDS (BGS STRICT GRADING):
+  - CENTERING: ALWAYS include numerical ratios (e.g., 50/50, 55/45) for BOTH front (top-to-bottom and side-to-side) and back in the explanation. Use the format: "Front: 50/50 T-B, 55/45 L-R. Back: 50/50."
   - BLK LABEL (10): Perfect 10 with all four 10 subgrades. Flawless.
   - PRISTINE 10: At least three 10 subgrades and one 9.5. Virtually flawless.
   - GEM MT 9.5: Centering: 50/50 one way, 55/45 the other on front. 60/40 or better on back. Corners: Mint to naked eye, slight imperfections under magnification. Edges: Virtually Mint to naked eye, speck of wear allowed under intense scrutiny. Surface: A few extremely minor print spots detectable only under intense scrutiny. Deep color, perfect gloss.
