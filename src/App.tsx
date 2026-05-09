@@ -16,7 +16,8 @@ import {
   doc, 
   setDoc, 
   deleteDoc, 
-  updateDoc 
+  updateDoc,
+  getDocFromServer
 } from 'firebase/firestore';
 import { auth, db } from './lib/firebase';
 import { analyzeAsset, reevaluateAssetValue } from './services/geminiService';
@@ -128,24 +129,52 @@ const ImageZone = ({ label, img, setImg, onRotate }: any) => {
           <div className="w-16 h-16 bg-slate-800 rounded-3xl flex items-center justify-center mx-auto border border-slate-700 shadow-xl"><Scan className="w-8 h-8 text-slate-500" /></div>
           <p className="text-[12px] font-black uppercase text-indigo-500 tracking-[0.2em]">{label}</p>
           <div className="flex gap-4">
-            <label htmlFor={`camera-${zoneId}`} className="p-5 rounded-3xl bg-indigo-600 hover:bg-indigo-700 text-white cursor-pointer shadow-xl transition-all hover:scale-105 active:scale-95" title="Take Photo">
+            <label 
+              htmlFor={`camera-${zoneId}`} 
+              className="p-5 rounded-3xl bg-indigo-600 hover:bg-indigo-700 text-white cursor-pointer shadow-xl transition-all hover:scale-105 active:scale-95" 
+              title="Take Photo"
+            >
               <CameraIcon className="w-6 h-6" />
               <input 
                 id={`camera-${zoneId}`}
+                key={`camera-input-${zoneId}`}
                 type="file" 
                 accept="image/*" 
-                capture="environment" 
-                onChange={e => { const f = e.target.files?.[0]; if (f) { const r = new FileReader(); r.onload = () => setImg(r.result as string); r.readAsDataURL(f); } e.target.value = ''; }} 
+                capture="environment"
+                onChange={e => { 
+                  console.log("Camera input change triggered");
+                  const f = e.target.files?.[0]; 
+                  if (f) { 
+                    const r = new FileReader(); 
+                    r.onload = () => setImg(r.result as string); 
+                    r.readAsDataURL(f); 
+                  } 
+                  e.target.value = ''; 
+                }} 
                 className="hidden" 
               />
             </label>
-            <label htmlFor={`gallery-${zoneId}`} className="p-5 rounded-3xl bg-slate-800 hover:bg-slate-700 text-white cursor-pointer border border-slate-700 shadow-xl transition-all hover:scale-105 active:scale-95" title="Upload from Gallery">
+            <label 
+              htmlFor={`gallery-${zoneId}`} 
+              className="p-5 rounded-3xl bg-slate-800 hover:bg-slate-700 text-white cursor-pointer border border-slate-700 shadow-xl transition-all hover:scale-105 active:scale-95" 
+              title="Upload from Gallery"
+            >
               <ImageIcon className="w-6 h-6" />
               <input 
                 id={`gallery-${zoneId}`}
+                key={`gallery-input-${zoneId}`}
                 type="file" 
                 accept="image/*" 
-                onChange={e => { const f = e.target.files?.[0]; if (f) { const r = new FileReader(); r.onload = () => setImg(r.result as string); r.readAsDataURL(f); } e.target.value = ''; }} 
+                onChange={e => { 
+                  console.log("Gallery input change triggered");
+                  const f = e.target.files?.[0]; 
+                  if (f) { 
+                    const r = new FileReader(); 
+                    r.onload = () => setImg(r.result as string); 
+                    r.readAsDataURL(f); 
+                  } 
+                  e.target.value = ''; 
+                }} 
                 className="hidden" 
               />
             </label>
@@ -332,6 +361,20 @@ const App = () => {
   }, [quotaCooldown]);
 
   useEffect(() => {
+    // Connectivity test
+    const testConnection = async () => {
+      try {
+        await getDocFromServer(doc(db, 'test', 'connection'));
+        console.log("Firestore connection verified");
+      } catch (err: any) {
+        if (err?.message?.includes('offline') || err?.code === 'unavailable') {
+          console.error("Firestore connectivity issue:", err);
+          setError("Cloud services temporarily unavailable. Operating in offline mode.");
+        }
+      }
+    };
+    testConnection();
+
     const unsubscribe = onAuthStateChanged(auth, (u) => {
       setUser(u);
       setAuthLoading(false);
@@ -372,6 +415,10 @@ const App = () => {
         }
         setProfileLoading(false);
       }
+    }, (err) => {
+      handleFirestoreError(err, OperationType.GET, `users/${user.uid}`);
+      setError("Failed to sync profile.");
+      setProfileLoading(false);
     });
     return () => unsubscribe();
   }, [user]);
