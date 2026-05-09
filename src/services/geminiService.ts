@@ -1,6 +1,17 @@
 import { GoogleGenAI, Type } from "@google/genai";
 
-const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY || "" });
+let genAI: GoogleGenAI | null = null;
+
+function getGenAI() {
+  if (!genAI) {
+    const key = process.env.GEMINI_API_KEY;
+    if (!key) {
+      throw new Error("GEMINI_API_KEY is not set. Please ensure it is configured in AI Studio Settings.");
+    }
+    genAI = new GoogleGenAI({ apiKey: key });
+  }
+  return genAI;
+}
 
 /**
  * Utility to retry a promise-returning function with exponential backoff.
@@ -94,6 +105,7 @@ const APPRAISAL_SCHEMA = {
 
 export async function analyzeAsset(frontImageBase64: string, backImageBase64: string) {
   return withRetry(async () => {
+    const ai = getGenAI();
     const result = await ai.models.generateContent({
       model: "gemini-3-flash-preview",
       contents: [
@@ -270,6 +282,7 @@ export async function analyzeAsset(frontImageBase64: string, backImageBase64: st
 
 export async function reevaluateAssetValue(assetData: any) {
   return withRetry(async () => {
+    const ai = getGenAI();
     const result = await ai.models.generateContent({
       model: "gemini-3-flash-preview",
       contents: [
