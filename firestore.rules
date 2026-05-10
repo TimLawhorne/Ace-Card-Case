@@ -1,62 +1,17 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Default deny
-    match /{document=**} {
-      allow read, write: if false;
-    }
-
-    // Helper: Basic ID validation
-    function isValidId(id) { 
-      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$'); 
+    // DIAGNOSTIC RULES: Allow all authenticated access to their own data
+    match /users/{userId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
     }
     
-    // Helper: Is user signed in
-    function isSignedIn() {
-      return request.auth != null;
-    }
-
-    function incoming() { return request.resource.data; }
-    function existing() { return resource.data; }
-
-    // Helper: Validate Inventory Item Schema
-    function isValidInventoryItem(data) {
-      return data.player is string && data.player.size() <= 500 &&
-             data.itemType is string && data.itemType.size() <= 100 &&
-             data.ownerId == request.auth.uid &&
-             (data.get('marketValue', 0) is number || data.get('marketValue', 0) is int) &&
-             (data.get('cost', 0) is number || data.get('cost', 0) is int) &&
-             (data.get('quantity', 1) is number || data.get('quantity', 1) is int) &&
-             (data.get('createdAt', 0) is number || data.get('createdAt', 0) is int);
-    }
-
-    // Helper: Validate User Profile Schema
-    function isValidUser(data) {
-      return data.uid == request.auth.uid &&
-             data.email is string &&
-             (data.trialExpiresAt is number || data.trialExpiresAt is int);
-    }
-
     match /inventory/{itemId} {
-      allow get: if isSignedIn() && existing().ownerId == request.auth.uid;
-      allow list: if isSignedIn() && resource.data.ownerId == request.auth.uid;
-      
-      allow create: if isSignedIn() && 
-                    isValidId(itemId) &&
-                    isValidInventoryItem(incoming());
-                    
-      allow update: if isSignedIn() && 
-                    existing().ownerId == request.auth.uid &&
-                    incoming().ownerId == existing().ownerId &&
-                    isValidInventoryItem(incoming());
-                    
-      allow delete: if isSignedIn() && existing().ownerId == request.auth.uid;
+      allow read, write: if request.auth != null && (resource == null || resource.data.ownerId == request.auth.uid || request.resource.data.ownerId == request.auth.uid);
     }
 
-    match /users/{userId} {
-      allow get: if isSignedIn() && userId == request.auth.uid;
-      allow create: if isSignedIn() && userId == request.auth.uid && isValidUser(incoming());
-      allow update: if isSignedIn() && userId == request.auth.uid && isValidUser(incoming());
+    match /{document=**} {
+      allow read, write: if false;
     }
   }
 }

@@ -1,0 +1,79 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Default deny
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // --- Helpers ---
+    function isSignedIn() { return request.auth != null; }
+    function isVerified() { return isSignedIn() && request.auth.token.email_verified == true; }
+    function isValidId(id) { return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$'); }
+    function incoming() { return request.resource.data; }
+    function existing() { return resource.data; }
+
+    // --- Validation Blueprints ---
+    function isValidInventoryItem(data) {
+      // Basic keys check for creation
+      return data.player is string && data.player.size() <= 500 &&
+             data.itemType is string && data.itemType.size() <= 100 &&
+             data.ownerId == request.auth.uid &&
+             (data.createdAt is int || data.createdAt is number) &&
+             (data.get('marketValue', 0) is number || data.get('marketValue', 0) is int) &&
+             (data.get('cost', 0) is number || data.get('cost', 0) is int) &&
+             (data.get('quantity', 1) is number || data.get('quantity', 1) is int);
+    }
+
+    function isValidUser(data) {
+      return data.uid == request.auth.uid &&
+             (data.get('email', '') is string && data.get('email', '').size() <= 200) &&
+             (data.trialExpiresAt is int || data.trialExpiresAt is number);
+    }
+
+    // --- Collection Routes ---
+
+    match /inventory/{itemId} {
+      // Pillar 3: Path Variable Hardening
+      allow get: if isSignedIn() && isValidId(itemId) && existing().ownerId == request.auth.uid;
+      
+      // Pillar 8: Secure List Queries
+      allow list: if isSignedIn() && resource.data.ownerId == request.auth.uid;
+      
+      allow create: if isVerified() && isValidId(itemId) && isValidInventoryItem(incoming());
+      
+      allow update: if isVerified() && isValidId(itemId) && 
+                    existing().ownerId == request.auth.uid &&
+                    incoming().ownerId == existing().ownerId &&
+                    isValidInventoryItem(incoming()) && (
+                      // Action: Update fields
+                      incoming().diff(existing()).affectedKeys().hasAny([
+                        'player', 'year', 'brand', 'set', 'cardNumber', 'variant', 
+                        'itemType', 'isCurrency', 'isCoin', 'isStamp', 'isComic', 
+                        'estimatedGrade', 'gemMintProbability', 'probabilityExplanation', 
+                        'gradingRecommendation', 'isGraded', 'gradingCompany', 
+                        'officialGrade', 'marketValue', 'cost', 'quantity', 
+                        'frontImage', 'backImage', 'reasoning', 'subgrades', 'updatedAt'
+                      ])
+                    );
+                    
+      allow delete: if isVerified() && isValidId(itemId) && existing().ownerId == request.auth.uid;
+    }
+
+    match /users/{userId} {
+      // Allow user to read their own profile
+      allow get: if isSignedIn() && isValidId(userId) && userId == request.auth.uid;
+      
+      allow create: if isVerified() && isValidId(userId) && userId == request.auth.uid && isValidUser(incoming());
+      
+      allow update: if isVerified() && isValidId(userId) && userId == request.auth.uid && 
+                    incoming().uid == existing().uid &&
+                    isValidUser(incoming()) && (
+                      incoming().diff(existing()).affectedKeys().hasAny([
+                        'email', 'trialStartedAt', 'trialExpiresAt', 'isSubscribed', 'isDevUnlocked'
+                      ])
+                    );
+    }
+  }
+}
